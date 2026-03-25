@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Número Secreto Pro</title>
+
+<style>
+body {
+  font-family: Arial;
+  text-align: center;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  color: white;
+  padding: 30px;
+}
+
+.container {
+  max-width: 400px;
+  margin: auto;
+  background: #1c1c1c;
+  padding: 25px;
+  border-radius: 15px;
+}
+
+input, button {
+  padding: 12px;
+  margin: 10px;
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+}
+
+button {
+  background: #00c853;
+  color: white;
+  cursor: pointer;
+}
+
+#resetBtn {
+  background: #2962ff;
+  display: none;
+}
+
+#mensagem {
+  margin-top: 15px;
+  min-height: 30px;
+}
+
+.sucesso { color: #69f0ae; }
+.erro { color: #ff5252; }
+.info { color: #40c4ff; }
+
+.pulse {
+  animation: pulse 0.4s;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+#historico {
+  margin-top: 20px;
+  font-size: 14px;
+  text-align: left;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>🎯 Número Secreto PRO</h1>
+
+  <p id="recorde">🏆 Recorde: --</p>
+
+  <input type="number" id="chute" placeholder="1 a 10">
+  <br>
+
+  <button onclick="jogar()">Chutar</button>
+  <button id="resetBtn" onclick="iniciar()">Jogar novamente</button>
+
+  <div id="mensagem"></div>
+  <div id="tentativas"></div>
+
+  <div id="historico"></div>
+</div>
+
+<script>
+let numero, tentativas, max = 5, ativo;
+let historico = [];
+
+function som(freq) {
+  let ctx = new (window.AudioContext || window.webkitAudioContext)();
+  let osc = ctx.createOscillator();
+  osc.type = "sine";
+  osc.frequency.value = freq;
+  osc.connect(ctx.destination);
+  osc.start();
+  setTimeout(() => osc.stop(), 150);
+}
+
+function iniciar() {
+  numero = Math.floor(Math.random() * 10) + 1;
+  tentativas = 1;
+  ativo = true;
+
+  document.getElementById("mensagem").innerText = "";
+  document.getElementById("tentativas").innerText = "";
+  document.getElementById("chute").value = "";
+  document.getElementById("resetBtn").style.display = "none";
+
+  atualizarRecorde();
+}
+
+function jogar() {
+  if (!ativo) return;
+
+  let chute = Number(document.getElementById("chute").value);
+  let msg = document.getElementById("mensagem");
+
+  if (!chute || chute < 1 || chute > 10) {
+    msg.innerText = "Número inválido!";
+    msg.className = "erro pulse";
+    som(200);
+    return;
+  }
+
+  if (chute === numero) {
+    msg.innerText = `🎉 Acertou em ${tentativas} tentativas!`;
+    msg.className = "sucesso pulse";
+    som(800);
+
+    salvarRecorde(tentativas);
+    historico.push(`✅ Vitória em ${tentativas} tentativas`);
+    finalizar();
+
+  } else if (tentativas >= max) {
+    msg.innerText = `💀 Perdeu! Era ${numero}`;
+    msg.className = "erro pulse";
+    som(150);
+
+    historico.push(`❌ Derrota (nº era ${numero})`);
+    finalizar();
+
+  } else if (chute > numero) {
+    msg.innerText = "📉 Menor!";
+    msg.className = "info pulse";
+    som(300);
+
+  } else {
+    msg.innerText = "📈 Maior!";
+    msg.className = "info pulse";
+    som(400);
+  }
+
+  document.getElementById("tentativas").innerText = `Tentativa ${tentativas}/${max}`;
+  tentativas++;
+
+  atualizarHistorico();
+}
+
+function finalizar() {
+  ativo = false;
+  document.getElementById("resetBtn").style.display = "inline-block";
+}
+
+function salvarRecorde(t) {
+  let recorde = localStorage.getItem("recorde");
+  if (!recorde || t < recorde) {
+    localStorage.setItem("recorde", t);
+  }
+}
+
+function atualizarRecorde() {
+  let r = localStorage.getItem("recorde");
+  document.getElementById("recorde").innerText = r ? `🏆 Recorde: ${r} tentativas` : "🏆 Recorde: --";
+}
+
+function atualizarHistorico() {
+  document.getElementById("historico").innerHTML =
+    "<b>Histórico:</b><br>" + historico.slice(-5).reverse().join("<br>");
+}
+
+iniciar();
+</script>
+
+</body>
+</html>
